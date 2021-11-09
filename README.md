@@ -7,6 +7,7 @@
 - ORM: [Sequelize](https://sequelize.org/)
 - Database: [PostgreSQL](https://www.postgresql.org/)
 - Package manager: [NPM](https://www.npmjs.com/)
+- API Documentation: [Swagger](https://swagger.io/)
 
 ## **Installation**
 1. **Clone project:**
