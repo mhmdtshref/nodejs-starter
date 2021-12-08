@@ -13,7 +13,7 @@
 1. **Clone project:**
 <br/>Open CMD and go to the directory you want to clone the app in and run:
   ```
-  git clone git@github.com:mhmdtshref/backend-starter.git
+  git clone git@github.com:mhmdtshref/nodejs-starter.git
   ```
    2. **Install modules:**
 <br/>Using cmd, go to project directory and run packages install script:
