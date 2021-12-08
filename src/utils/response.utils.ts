@@ -5,6 +5,7 @@ const notFound = (response: Response, error: string) => response.status(404).jso
 const created = (response: Response, data: { [key: string]: any }, message: string) => response.status(201).json({ data, message });
 const unauthorized = (response: Response) => response.status(401).json({ error: 'Unauthorized' });
 const badRequest = (response: Response, error: string) => response.status(400).json({ error });
+const forbidden = (response: Response, error: string) => response.status(400).json({ error })
 
 export default {
     success,
@@ -12,4 +13,5 @@ export default {
     created,
     unauthorized,
     badRequest,
+    forbidden,
 };
