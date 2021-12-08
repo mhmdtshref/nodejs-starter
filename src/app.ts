@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
-import { ResponseUtils } from './utils';
-import router from './routers';
+import { ResponseUtils } from '@utils';
+import router from '@routers';
 
 const app = express();
 
