@@ -1,7 +1,7 @@
 import http from 'http';
-import './environment';
-import database from './database/sequelize.database';
-import app from './app';
+import '@environment';
+import database from '@database/sequelize.database';
+import app from '@src/app';
 
 const server = new http.Server(app);
 

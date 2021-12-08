@@ -1,5 +1,5 @@
 import { Model as SequelizeModel, InitOptions } from 'sequelize';
-import sequelize from './sequelize.database';
+import sequelize from '@database/sequelize.database';
 
 export class Model extends SequelizeModel {
     createdAt?: Date;
