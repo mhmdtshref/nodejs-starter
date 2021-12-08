@@ -1,27 +1,21 @@
 import express from 'express';
+import cors from 'cors';
+import { ResponseUtils } from './utils';
 import router from './routers';
 
 const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cors());
 app.use((request, response, next) => {
     const whitelistOrigins = process.env.WHITELIST_ORIGINS?.split(',') || [];
     const requestOrigin = request.headers?.origin as string;
-    if (whitelistOrigins.includes(requestOrigin)) {
-        response.setHeader('Access-Control-Allow-Origin', origin);
+    if (whitelistOrigins.length && !whitelistOrigins.includes(requestOrigin)) {
+        ResponseUtils.forbidden(response, 'Forbidden host')
+        return;
     }
-    response.setHeader('Access-Control-Allow-Credentials', 'true');
-    response.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS, POST, PUT, PATCH, DELETE');
-    response.setHeader(
-        'Access-Control-Allow-Headers',
-        'Access-Control-Allow-Headers, Origin,Accept, Content-Type, Authorization, Access-Control-Request-Headers, x-provider',
-    );
-
-    if (request.method === 'OPTIONS') {
-        return response.status(405).json({ success: false, error: 'Method not allowed' });
-    }
-    return next();
+    next();
 });
 
 // Router

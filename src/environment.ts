@@ -12,14 +12,19 @@ dotenv.config({
 });
 
 const requiredVariables = [
+    // Server:
     'HOST',
     'PORT',
+
+    // Database:
     'DB_USER',
     'DB_USER_PASSWORD',
     'DB_SERVER_HOST',
     'DB_SERVER_PORT',
     'DB_NAME',
     'DB_LOGGING',
+
+    // App:
     'APP_NAME',
     'APP_CONTACT_NAME',
     'APP_CONTACT_EMAIL',
