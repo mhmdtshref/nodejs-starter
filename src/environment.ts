@@ -24,6 +24,9 @@ const requiredVariables = [
     'DB_NAME',
     'DB_LOGGING',
 
+    // Mailing:
+    'SEND_GRID_API_KEY',
+
     // App:
     'APP_NAME',
     'APP_CONTACT_NAME',
