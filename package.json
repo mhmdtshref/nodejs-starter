@@ -12,7 +12,9 @@
     "serve": "nodemon -r tsconfig-paths/register ./src/index.ts",
     "dev": "cross-env NODE_ENV=dev APP_ENV=dev npm run serve",
     "local": "cross-env NODE_ENV=local APP_ENV=dev npm run serve",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "db:migrate:dev": "cross-env NODE_ENV=dev npx sequelize-cli db:migrate --env=dev",
+    "db:migrate:local": "cross-env NODE_ENV=local npx sequelize-cli db:migrate --env=local"
   },
   "repository": {
     "type": "git",

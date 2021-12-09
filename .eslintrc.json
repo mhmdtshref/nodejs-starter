@@ -20,6 +20,7 @@
     "plugins": [
         "@typescript-eslint"
     ],
+    "ignorePatterns": ["src/logs/*.log", "src/database/migrations.config.js", "src/database/migrations/*.js", "src/database/seeders/*.js"],
     "rules": {
         "import/extensions": 0,
         "import/prefer-default-export": 0
