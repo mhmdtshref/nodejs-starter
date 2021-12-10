@@ -8,11 +8,25 @@ const logger = winston.createLogger({
     ],
 });
 
+/**
+ * @memberof LoggerUtils
+ * @name logError
+ * @description Add an error to errors and combined logs file
+ * @param {any} error error needs to be added, usually a string or error type
+ * @returns {void} Returns an empty promise
+ */
 const logError = (error: any) => {
     logger.error(error)
 }
 
-const logInfo = (info: any) => {
+/**
+ * @memberof LoggerUtils
+ * @name logInfo
+ * @description Add an info to combined logs file
+ * @param {any} info Info needs to be added, usually a string or object type
+ * @returns {void} Returns an empty promise
+ */
+const logInfo = (info: any): void => {
     logger.info(info);
 }
 
