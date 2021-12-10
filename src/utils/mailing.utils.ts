@@ -3,7 +3,14 @@ import { EmailProps, SendGridApiBodyProps } from '@types';
 
 const emailRequestUrl = 'https://api.sendgrid.com/v3/mail/send';
 
-export const sendEmail = async ({ fromEmail, toEmail, templateId, templateVariablesValues }: EmailProps) => {
+/**
+ * @memberof MailingUtils
+ * @name sendEmail
+ * @description Sends email to users
+ * @param {EmailProps} emailProps Properties of the sending email (from, to and template details)
+ * @returns {Promise<void>} Returns an empty promise
+ */
+export const sendEmail = async ({ fromEmail, toEmail, templateId, templateVariablesValues }: EmailProps): Promise<void> => {
 
     // Setup SendGrid request body:
     const emailRequestBody: SendGridApiBodyProps = {
