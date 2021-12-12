@@ -1,4 +1,4 @@
-import AuthController from './Auth.controller';
+import AuthController from './auth.controller';
 
 export {
     AuthController,
