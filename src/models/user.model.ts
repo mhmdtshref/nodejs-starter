@@ -71,7 +71,7 @@ class User {
 
     create = async () => {
         // Get user data:
-        const userData = this.getCreateData();
+        const userData = this.getData();
         const { email, password } = userData;
 
         // Validate user details:
@@ -96,7 +96,7 @@ class User {
         return User.getModel(createdTable);
     }
 
-    getCreateData = () => ({
+    getData = () => ({
         id: this.id,
         firstName: this.firstName,
         lastName: this.lastName,
