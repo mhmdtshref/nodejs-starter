@@ -1,5 +1,5 @@
 import { UserTable, LoginTable } from '@database/tables';
-import { UserValidator } from '@validators';
+import { UserValidators } from '@validators';
 import { LoginProvider } from '@types';
 import { HashingUtils } from '@utils';
 
@@ -75,7 +75,7 @@ class User {
         const { email, password } = userData;
 
         // Validate user details:
-        const validationResult = await UserValidator.validateUserCreate(userData);
+        const validationResult = await UserValidators.validateUserCreate(userData);
 
         // Check validation errors:
         if (validationResult.error) {
@@ -112,6 +112,32 @@ class User {
         birthDate: this.birthDate,
         email: this.email,
     });
+
+    static loginByLocalCredentials = async (email: string, password: string) => {
+        if (!email || !password) {
+            throw new Error('Email or password not found');
+        }
+
+        const user = await this.findByEmail(email);
+
+        if (!user) {
+            return new Error('No user found with passed email');
+        }
+
+        // Get password hash:
+        const passwordHash = user?.passwordHash as string;
+
+        // Verify password:
+        const isPasswordVerified = HashingUtils.verifyHash(password, passwordHash);
+
+        // Send error message if password is wrong:
+        if (!isPasswordVerified) {
+            return new Error('Invalid password for passed email');
+        }
+
+        return user;
+    }
+
 }
 
 export default User;

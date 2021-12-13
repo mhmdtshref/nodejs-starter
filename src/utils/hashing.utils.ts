@@ -5,6 +5,15 @@ const hashText = (text: string) => {
     return hash;
 }
 
+const verifyHash = (text: string, hash: string) => {
+    // Compare hash with original:
+    const result = bcrypt.compareSync(text, hash);
+
+    // Return result:
+    return result;
+}
+
 export default {
     hashText,
+    verifyHash,
 };

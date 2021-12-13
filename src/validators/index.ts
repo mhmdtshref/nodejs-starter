@@ -1,5 +1,7 @@
-import UserValidator from './User.validators';
+import UserValidators from './user.validators';
+import AuthValidators from './auth.validators';
 
 export {
-    UserValidator,
+    UserValidators,
+    AuthValidators,
 };
