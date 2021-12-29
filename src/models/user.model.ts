@@ -2,6 +2,7 @@ import { UserTable, LoginTable } from '@database/tables';
 import { UserValidators } from '@validators';
 import { LoginProvider } from '@types';
 import { HashingUtils } from '@utils';
+import lodash from 'lodash';
 
 interface UserConstructorProps {
     id?: number;
@@ -40,6 +41,8 @@ class User {
         this.lastName = data.lastName;
         this.email = data.email;
         this.passwordHash = data.passwordHash;
+        this.password = data.password;
+        this.birthDate = data.birthDate ? new Date(data.birthDate) : undefined;
     }
 
     static getModel = (userTable: UserTable) => {
@@ -71,15 +74,21 @@ class User {
 
     create = async () => {
         // Get user data:
-        const userData = this.getData();
+        const userData = lodash.omitBy(this.getData(), lodash.isUndefined);
         const { email, password } = userData;
 
         // Validate user details:
-        const validationResult = await UserValidators.validateUserCreate(userData);
+        const validationResult = UserValidators.validateUserCreate(userData);
 
         // Check validation errors:
         if (validationResult.error) {
-            throw new Error(validationResult.error.message);
+            return Error(validationResult.error.message);
+        }
+
+        // Check duplicated email:
+        const foundUser = await User.findByEmail(userData.email as string);
+        if (foundUser) {
+            return new Error('User exists with sent email');
         }
 
         // Hash password
@@ -96,14 +105,7 @@ class User {
         return User.getModel(createdTable);
     }
 
-    getData = () => ({
-        id: this.id,
-        firstName: this.firstName,
-        lastName: this.lastName,
-        birthDate: this.birthDate,
-        email: this.email,
-        password: this.password,
-    })
+    getData = () => lodash.pick(this, ['id', 'firstName', 'lastName', 'birthDate', 'email', 'password']);
 
     getPublicData = () => ({
         id: this.id,

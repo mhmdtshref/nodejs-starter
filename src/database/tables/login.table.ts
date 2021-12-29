@@ -24,7 +24,7 @@ Login.init({
     passwordHash: {
         type: DataTypes.TEXT,
         allowNull: false,
-        validate: Validators.stringValidateObject('passwordHash', false, { min: 255, max: 4095 }),
+        validate: Validators.stringValidateObject('passwordHash', false),
     },
     provider: {
         type: DataTypes.ENUM(...Object.values(LoginProvider)),
