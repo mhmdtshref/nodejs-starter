@@ -1,9 +1,8 @@
 import { Request, Response } from 'express';
 import { User } from '@models';
 import { JWTUtils, ResponseUtils } from '@utils';
-import { AuthValidators, UserValidators } from '@validators';
+import { AuthValidators } from '@validators';
 import Logger from '@logger';
-import lodash from 'lodash';
 
 const userAuthTokenSecret = process.env.USER_AUTH_TOKEN_SECRET as string;
 
