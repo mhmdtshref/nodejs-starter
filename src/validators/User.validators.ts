@@ -1,3 +1,4 @@
+import { UserStatus } from '@types';
 import Joi from 'joi';
 
 const userCreateSchema = {
@@ -6,6 +7,7 @@ const userCreateSchema = {
     birthDate: Joi.date().max(new Date()).required(),
     email: Joi.string().email().required(),
     password: Joi.string().min(6).max(64).required(),
+    status: Joi.string().valid(...Object.values(UserStatus)),
 }
 
 const validateUserCreate = (data: { [key: string]: unknown }) => Joi.object(userCreateSchema).validate(data, { abortEarly: false })

@@ -30,6 +30,7 @@ Login.init({
         type: DataTypes.ENUM(...Object.values(LoginProvider)),
         allowNull: false,
         defaultValue: LoginProvider.local,
+        validate: Validators.enumValidateObject('provider', Object.values(LoginProvider), false),
     },
 }, tableConfigs);
 

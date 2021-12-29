@@ -43,6 +43,13 @@ const isAuthorized = async (request: Request, response: Response, nextFunction: 
 
 };
 
+/*
+    TODO: Add those middlewares:
+    - isGuest
+    - isActive
+    - isPendingVerification
+*/
+
 export default {
     isAuthorized,
 };

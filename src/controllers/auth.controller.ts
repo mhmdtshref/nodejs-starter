@@ -44,6 +44,8 @@ const register = async (request: Request, response: Response) => {
             token,
         };
 
+        // TODO: Send email with verification link:
+
         // Send response:
         ResponseUtils.created(response, responseBody, 'User created successfully');
 
@@ -111,7 +113,41 @@ const login = async (request: Request, response: Response) => {
     }
 }
 
+const verify = async (request: Request, response: Response) => {
+    try {
+        const { id, verificationCode } = request.body;
+        const user = await User.findById(id as number);
+
+        if (!user) {
+            ResponseUtils.badRequest(response, 'User not found');
+            return;
+        }
+
+        const verifiedUser = await user.verify(verificationCode as string);
+
+        if (verifiedUser instanceof Error) {
+            ResponseUtils.badRequest(response, verifiedUser.message);
+            return;
+        }
+
+        ResponseUtils.success(response, user.getPublicData(), 'User verified successfully');
+    } catch (error: any) {
+        // Logging error:
+        Logger.error(error);
+
+        // Response with catched error:
+        ResponseUtils.badRequest(response, error?.message || 'Unknown error');
+    }
+}
+
+const requestVerificationEmail = (request: Request, response: Response) => {
+    // TODO: Resend verification email (optional: change verification code)
+    ResponseUtils.success(response, {}, 'Verification email sent successfully');
+}
+
 export default {
     register,
     login,
+    verify,
+    requestVerificationEmail,
 };

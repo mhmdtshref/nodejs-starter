@@ -1,8 +1,9 @@
 import { UserTable, LoginTable } from '@database/tables';
 import { UserValidators } from '@validators';
-import { LoginProvider } from '@types';
+import { LoginProvider, UserStatus } from '@types';
 import { HashingUtils } from '@utils';
 import lodash from 'lodash';
+import { nanoid } from 'nanoid';
 
 interface UserConstructorProps {
     id?: number;
@@ -18,6 +19,10 @@ interface UserConstructorProps {
     passwordHash?: string;
 
     password?: string;
+
+    status?: UserStatus;
+
+    verificationCode?: string;
 }
 
 class User {
@@ -35,6 +40,10 @@ class User {
 
     password?: string;
 
+    status?: UserStatus;
+
+    verificationCode?: string;
+
     constructor (data: UserConstructorProps) {
         this.id = data.id;
         this.firstName = data.firstName;
@@ -43,6 +52,7 @@ class User {
         this.passwordHash = data.passwordHash;
         this.password = data.password;
         this.birthDate = data.birthDate ? new Date(data.birthDate) : undefined;
+        this.status = data.status;
     }
 
     static getModel = (userTable: UserTable) => {
@@ -51,6 +61,7 @@ class User {
             id: userTable?.id,
             firstName: userTable?.firstName,
             lastName: userTable?.lastName,
+            status: userTable?.status,
             email: localLogin?.email,
             passwordHash: localLogin?.passwordHash,
         });
@@ -75,6 +86,7 @@ class User {
     create = async () => {
         // Get user data:
         const userData = lodash.omitBy(this.getData(), lodash.isUndefined);
+        userData.status = UserStatus.pendingVerification;
         const { email, password } = userData;
 
         // Validate user details:
@@ -96,7 +108,9 @@ class User {
 
         // Prepare login and user tables data:
         const loginTable = { email, passwordHash } as LoginTable;
-        const userTable = { firstName: this.firstName, lastName: this.lastName, birthDate: this.birthDate, Logins: [loginTable] } as UserTable;
+        const verificationCode = nanoid(30);
+
+        const userTable = { firstName: this.firstName, lastName: this.lastName, birthDate: this.birthDate, verificationCode, Logins: [loginTable] } as UserTable;
 
         // Create row:
         const createdTable = await UserTable.create(userTable, { include: [{ model: LoginTable }] });
@@ -105,7 +119,29 @@ class User {
         return User.getModel(createdTable);
     }
 
-    getData = () => lodash.pick(this, ['id', 'firstName', 'lastName', 'birthDate', 'email', 'password']);
+    verify = async (verificationCode: string) => {
+        if (!this.id) {
+            throw new Error('this.id not found');
+        }
+
+        if (!verificationCode) {
+            throw new Error('verificationCode not found');
+        }
+
+        const user = await UserTable.findByPk(this.id);
+        if (!user) {
+            throw new Error('User not found');
+        }
+
+        if (user.verificationCode !== verificationCode) {
+            return new Error('Invalid verification code');
+        }
+
+        const updatedUser = await user.update({ status: UserStatus.active });
+        return new User(updatedUser);
+    }
+
+    getData = () => lodash.pick(this, ['id', 'firstName', 'lastName', 'birthDate', 'email', 'password', 'status']);
 
     getPublicData = () => ({
         id: this.id,

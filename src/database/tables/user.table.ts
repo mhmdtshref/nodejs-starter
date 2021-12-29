@@ -1,7 +1,8 @@
 import { Model, tableConfigs } from '@database/settings.database';
 import { DataTypes } from 'sequelize';
-import LoginTable from './login.table';
-import Validators from '../validator.database';
+import { UserStatus } from '@types';
+import Validators from '@database/validator.database';
+import LoginTable from '@database/tables/login.table';
 
 class User extends Model {
     id?: number;
@@ -11,6 +12,10 @@ class User extends Model {
     lastName!: string;
 
     birthDate?: Date;
+
+    status!: UserStatus;
+
+    verificationCode!: string;
 
     Logins?: LoginTable[];
 }
@@ -31,6 +36,17 @@ User.init({
         allowNull: true,
         validate: Validators.dateValidateObject('brithDate', true, new Date()),
     },
+    status: {
+        type: DataTypes.ENUM(...Object.values(UserStatus)),
+        allowNull: false,
+        defaultValue: UserStatus.pendingVerification,
+        validate: Validators.enumValidateObject('status', Object.values(UserStatus), true),
+    },
+    verificationCode: {
+        type: DataTypes.STRING(32),
+        allowNull: false,
+        validate: Validators.stringValidateObject('verificationCode', false, { min: 30, max: 30 }),
+    }
 }, tableConfigs);
 
 export default User;
