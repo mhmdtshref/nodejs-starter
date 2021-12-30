@@ -1,9 +1,10 @@
 import { UserTable, LoginTable } from '@database/tables';
 import { UserValidators } from '@validators';
 import { LoginProvider, UserStatus } from '@types';
-import { HashingUtils } from '@utils';
+import { HashingUtils, MailingUtils } from '@utils';
 import lodash from 'lodash';
 import { nanoid } from 'nanoid';
+import Emails from '@emails';
 
 interface UserConstructorProps {
     id?: number;
@@ -23,6 +24,8 @@ interface UserConstructorProps {
     status?: UserStatus;
 
     verificationCode?: string;
+
+    Logins?: LoginTable[];
 }
 
 class User {
@@ -45,14 +48,16 @@ class User {
     verificationCode?: string;
 
     constructor (data: UserConstructorProps) {
+        const localLogin = data.Logins?.find(login => login.provider === LoginProvider.local);
         this.id = data.id;
         this.firstName = data.firstName;
         this.lastName = data.lastName;
-        this.email = data.email;
-        this.passwordHash = data.passwordHash;
+        this.email = data.email || localLogin?.email;
+        this.passwordHash = data.passwordHash || localLogin?.passwordHash;
         this.password = data.password;
         this.birthDate = data.birthDate ? new Date(data.birthDate) : undefined;
         this.status = data.status;
+        this.verificationCode = data.verificationCode;
     }
 
     static getModel = (userTable: UserTable) => {
@@ -62,6 +67,7 @@ class User {
             firstName: userTable?.firstName,
             lastName: userTable?.lastName,
             status: userTable?.status,
+            verificationCode: userTable?.verificationCode,
             email: localLogin?.email,
             passwordHash: localLogin?.passwordHash,
         });
@@ -72,7 +78,7 @@ class User {
         if (!foundUser) {
             return null;
         }
-        return this.getModel(foundUser);
+        return new User(foundUser);
     }
 
     static findByEmail = async (userEmail: string) => {
@@ -80,7 +86,7 @@ class User {
         if (!foundUser) {
             return null;
         }
-        return this.getModel(foundUser);
+        return new User(foundUser);
     }
 
     create = async () => {
@@ -163,7 +169,7 @@ class User {
         }
 
         // Get password hash:
-        const passwordHash = user?.passwordHash as string;
+        const passwordHash = user.passwordHash as string;
 
         // Verify password:
         const isPasswordVerified = HashingUtils.verifyHash(password, passwordHash);
@@ -175,6 +181,38 @@ class User {
 
         return user;
     }
+
+    sendRegistrationEmail = () => MailingUtils.sendEmail({
+        from: {
+            email: process.env.REGISTRATION_FROM_EMAIL as string,
+            name: process.env.REGISTRATION_FROM_NAME as string,
+        },
+        subject: 'New User Registration',
+        to: {
+            name: `${this.firstName} ${this.lastName}`,
+            email: this.email as string,
+        },
+        html: Emails.RegistrationHtml({
+            name: this.firstName as string,
+            verificationUrl: `${process.env.FORNTEND_URL}${process.env.VERIFY_URL}?id=${this.id}&verificationCode=${this.verificationCode}`,
+        }),
+    });
+
+    resendVerificationEmail = () => MailingUtils.sendEmail({
+        from: {
+            email: process.env.REGISTRATION_FROM_EMAIL as string,
+            name: process.env.REGISTRATION_FROM_NAME as string,
+        },
+        subject: 'Email Veridication',
+        to: {
+            name: `${this.firstName} ${this.lastName}`,
+            email: this.email as string,
+        },
+        html: Emails.EmailVerificationEmail({
+            name: this.firstName as string,
+            verificationUrl: `${process.env.FORNTEND_URL}${process.env.VERIFY_URL}?id=${this.id}&verificationCode=${this.verificationCode}`,
+        }),
+    })
 
 }
 

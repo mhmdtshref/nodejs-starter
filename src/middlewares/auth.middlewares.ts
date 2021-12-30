@@ -1,5 +1,5 @@
 import { User } from '@models';
-import { UserTokenObject } from '@src/types';
+import { UserStatus, UserTokenObject } from '@src/types';
 import { JWTUtils, ResponseUtils } from '@utils';
 import { Request, Response, NextFunction } from 'express';
 import moment from 'moment';
@@ -36,20 +36,66 @@ const isAuthorized = async (request: Request, response: Response, nextFunction: 
     }
 
     // Save user details in request app:
-    request.app.set('user', user?.getData());
+    request.app.set('user', user);
 
     // Next function:
     nextFunction();
 
 };
 
-/*
-    TODO: Add those middlewares:
-    - isGuest
-    - isActive
-    - isPendingVerification
-*/
+const isGuest = (request: Request, response: Response, nextFunction: NextFunction) => {
+
+    // Get token from header:
+    const token = request.headers.authorization?.replace('Bearer ', '') as string;
+
+    // Check if token found:
+    if (token) {
+        ResponseUtils.unauthorized(response, 'Token error');
+    }
+
+    // Continue to next function:
+    nextFunction();
+}
+
+const isActive = (request: Request, response: Response, nextFunction: NextFunction) => {
+
+    // Get user:
+    const user = request.app.get('user') as User;
+
+    if (!user) {
+        ResponseUtils.unauthorized(response, 'No user authenticated');
+    }
+
+    // Check user status if active or not:
+    if (user.status !== UserStatus.active) {
+        ResponseUtils.unauthorized(response, 'User is inavtive');
+    }
+
+    // Continue to next function:
+    nextFunction();
+}
+
+const isPendingVerification = async (request: Request, response: Response, nextFunction: NextFunction) => {
+
+    // Get user:
+    const user = request.app.get('user') || (await User.findById(Number(request.query.id)));
+
+    if (!user) {
+        ResponseUtils.unauthorized(response, 'No user found');
+    }
+
+    // Check if user is pending:
+    if (user.status !== UserStatus.pendingVerification) {
+        ResponseUtils.unauthorized(response, 'User status is not pending verification');
+    }
+
+    // Continue to next function:
+    nextFunction();
+}
 
 export default {
     isAuthorized,
+    isGuest,
+    isActive,
+    isPendingVerification,
 };

@@ -17,7 +17,8 @@
       "@models": ["./src/models"],
       "@routers": ["./src/routers"],
       "@middlewares": ["./src/middlewares"],
-      "@environment": ["./src/environment"]
+      "@environment": ["./src/environment"],
+      "@emails": ["./src/emails"]
     },
     "typeRoots": [
       "./src/types/*",

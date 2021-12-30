@@ -44,10 +44,15 @@ const register = async (request: Request, response: Response) => {
             token,
         };
 
-        // TODO: Send email with verification link:
-
         // Send response:
         ResponseUtils.created(response, responseBody, 'User created successfully');
+
+        // Send email with verification link:
+        createdUser.sendRegistrationEmail()
+        .catch((error) => {
+            // Log error:
+            Logger.error(error);
+        })
 
     } catch (error: any) {
         // Log error:
@@ -140,9 +145,11 @@ const verify = async (request: Request, response: Response) => {
     }
 }
 
-const requestVerificationEmail = (request: Request, response: Response) => {
-    // TODO: Resend verification email (optional: change verification code)
-    ResponseUtils.success(response, {}, 'Verification email sent successfully');
+const requestVerificationEmail = async (request: Request, response: Response) => {
+    const user = request.app.get('user') as User;
+    await user.sendRegistrationEmail();
+
+    ResponseUtils.success(response, user.getPublicData(), 'Verification email resent successfully');
 }
 
 export default {

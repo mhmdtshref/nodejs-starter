@@ -1,8 +1,19 @@
+
+interface EmailContent {
+    type: string,
+    value: string,
+}
+
+interface EmailUser {
+    name: string,
+    email: string,
+}
 export interface EmailProps {
-    fromEmail: string;
-    toEmail: string;
-    templateId: string;
-    templateVariablesValues: { [key: string]: string | number };
+    from: EmailUser;
+    to: EmailUser;
+    subject: string;
+    html: string;
+    replyTo?: EmailUser;
 }
 
 export interface SendGridApiBodyProps {
@@ -16,10 +27,11 @@ export interface SendGridApiBodyProps {
               },
            ],
            // eslint-disable-next-line camelcase
-           dynamic_template_data: {
+           dynamic_template_data?: {
                [key: string]: string | number,
             }
     }[],
     // eslint-disable-next-line camelcase
-    template_id: string,
+    template_id?: string,
+    content?: EmailContent,
 }
