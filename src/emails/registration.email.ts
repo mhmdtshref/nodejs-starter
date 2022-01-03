@@ -3,7 +3,14 @@ interface RegistrationEmailProps {
 	verificationUrl: string,
 }
 
-export default ({
+/**
+ * @memberof RegistrationHtml
+ * @name registrationEmailHtmlGenerator
+ * @description Generates registration email html
+ * @param {RegistrationEmailProps} data Email details (user name and verification url)
+ * @returns {string} Email html as string
+ */
+const registrationEmailHtmlGenerator = ({
 	name,
 	verificationUrl,
 }: RegistrationEmailProps) => `
@@ -13,3 +20,5 @@ export default ({
 	<p><a href="${verificationUrl}">Click here to verify your email and account</a></p>
 </div>
 `;
+
+export default registrationEmailHtmlGenerator;

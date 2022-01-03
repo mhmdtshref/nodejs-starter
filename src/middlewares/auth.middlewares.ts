@@ -6,6 +6,15 @@ import moment from 'moment';
 
 const userAuthTokenSecret = process.env.USER_AUTH_TOKEN_SECRET as string;
 
+/**
+ * @memberof AuthMiddleware
+ * @name isAuthorized
+ * @description Verifies if user author
+ * @param {Request} request Request
+ * @param {Response} response Response
+ * @param {NextFunction} nextFunction Next function
+ * @returns {Promise<void>}
+ */
 const isAuthorized = async (request: Request, response: Response, nextFunction: NextFunction) => {
     
     // Get token from header:
@@ -43,6 +52,15 @@ const isAuthorized = async (request: Request, response: Response, nextFunction: 
 
 };
 
+/**
+ * @memberof AuthMiddleware
+ * @name isGuest
+ * @description Verifies if no token (no user)
+ * @param {Request} request Request
+ * @param {Response} response Response
+ * @param {NextFunction} nextFunction Next function
+ * @returns {void}
+ */
 const isGuest = (request: Request, response: Response, nextFunction: NextFunction) => {
 
     // Get token from header:
@@ -57,6 +75,15 @@ const isGuest = (request: Request, response: Response, nextFunction: NextFunctio
     nextFunction();
 }
 
+/**
+ * @memberof AuthMiddleware
+ * @name isActive
+ * @description Verifies if user status is active
+ * @param {Request} request Request
+ * @param {Response} response Response
+ * @param {NextFunction} nextFunction Next function
+ * @returns {void}
+ */
 const isActive = (request: Request, response: Response, nextFunction: NextFunction) => {
 
     // Get user:
@@ -75,6 +102,15 @@ const isActive = (request: Request, response: Response, nextFunction: NextFuncti
     nextFunction();
 }
 
+/**
+ * @memberof AuthMiddleware
+ * @name isPendingVerification
+ * @description Verifies if user status is pending-verification
+ * @param {Request} request Request
+ * @param {Response} response Response
+ * @param {NextFunction} nextFunction Next function
+ * @returns {Promise<void>}
+ */
 const isPendingVerification = async (request: Request, response: Response, nextFunction: NextFunction) => {
 
     // Get user:

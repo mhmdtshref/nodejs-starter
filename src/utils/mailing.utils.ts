@@ -13,7 +13,7 @@ const emailRequestUrl = 'https://api.sendgrid.com/v3/mail/send';
 const sendEmail = async ({ from, to, subject, html, replyTo }: EmailProps): Promise<void> => {
 
     // Setup SendGrid request body:
-    const emailRequestBody = {
+    const emailRequestBody: SendGridApiBodyProps = {
         personalizations: [
             {
                 to: [to],
@@ -28,7 +28,7 @@ const sendEmail = async ({ from, to, subject, html, replyTo }: EmailProps): Prom
         ],
         from,
         reply_to: replyTo || from,
-    }
+    };
 
     // Setup Send Grid email request headers:
     const emailRequestHeaders = {

@@ -10,6 +10,13 @@ const userCreateSchema = {
     status: Joi.string().valid(...Object.values(UserStatus)),
 }
 
+/**
+ * @memberof UserValidators
+ * @name validateUserCreate
+ * @description Validates create-user data using user create schema (format and props)
+ * @param {Object} data User data
+ * @returns {Joi.ValidationResult<any>} Validation results object
+ */
 const validateUserCreate = (data: { [key: string]: unknown }) => Joi.object(userCreateSchema).validate(data, { abortEarly: false })
 
 export default {

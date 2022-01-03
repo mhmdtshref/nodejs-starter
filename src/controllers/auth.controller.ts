@@ -6,6 +6,14 @@ import Logger from '@logger';
 
 const userAuthTokenSecret = process.env.USER_AUTH_TOKEN_SECRET as string;
 
+/**
+ * @memberof AuthController
+ * @name register
+ * @description Register new user API handler
+ * @param {Request} request Request
+ * @param {Response} response Response
+ * @returns {Promise<void>}
+ */
 const register = async (request: Request, response: Response) => {
     try {
         // Get data from body:
@@ -63,6 +71,14 @@ const register = async (request: Request, response: Response) => {
     }
 }
 
+/**
+ * @memberof AuthController
+ * @name login
+ * @description User login API handler
+ * @param {Request} request Request
+ * @param {Response} response Response
+ * @returns {Promise<void>}
+ */
 const login = async (request: Request, response: Response) => {
     try {
         // Get data from body:
@@ -118,6 +134,14 @@ const login = async (request: Request, response: Response) => {
     }
 }
 
+/**
+ * @memberof AuthController
+ * @name verify
+ * @description Verify user API handler
+ * @param {Request} request Request
+ * @param {Response} response Response
+ * @returns {Promise<void>}
+ */
 const verify = async (request: Request, response: Response) => {
     try {
         const { id, verificationCode } = request.body;
@@ -145,6 +169,14 @@ const verify = async (request: Request, response: Response) => {
     }
 }
 
+/**
+ * @memberof AuthController
+ * @name requestVerificationEmail
+ * @description Request new verification email handler
+ * @param {Request} request Request
+ * @param {Response} response Response
+ * @returns {Promise<void>}
+ */
 const requestVerificationEmail = async (request: Request, response: Response) => {
     const user = request.app.get('user') as User;
     await user.sendRegistrationEmail();

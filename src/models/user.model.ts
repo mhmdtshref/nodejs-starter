@@ -1,6 +1,6 @@
 import { UserTable, LoginTable } from '@database/tables';
 import { UserValidators } from '@validators';
-import { LoginProvider, UserStatus } from '@types';
+import { LoginProvider, UserData, UserPublicData, UserStatus } from '@types';
 import { HashingUtils, MailingUtils } from '@utils';
 import lodash from 'lodash';
 import { nanoid } from 'nanoid';
@@ -60,6 +60,13 @@ class User {
         this.verificationCode = data.verificationCode;
     }
 
+    /**
+     * @memberof User
+     * @name getModel
+     * @description Generated User from user database row instance
+     * @param {UserTable} userTable UserTable instance
+     * @returns {User} user model
+     */
     static getModel = (userTable: UserTable) => {
         const localLogin = userTable?.Logins?.find(login => login?.provider === LoginProvider.local);
         return new User({
@@ -73,6 +80,13 @@ class User {
         });
     }
 
+    /**
+     * @memberof User
+     * @name findById
+     * @description Get User instance by user id
+     * @param {number} userId User id
+     * @returns {Promise<User | null>} User if found, null if not
+     */
     static findById = async (userId: number) => {
         const foundUser = await UserTable.findByPk(userId, { include: [{ model: LoginTable }] });
         if (!foundUser) {
@@ -81,6 +95,13 @@ class User {
         return new User(foundUser);
     }
 
+    /**
+     * @memberof User
+     * @name findByEmail
+     * @description Get User instance by user email
+     * @param {string} userEmail User email
+     * @returns {Promise<User | null>} User if found, null if not
+     */
     static findByEmail = async (userEmail: string) => {
         const foundUser = await UserTable.findOne({ include: [{ model: LoginTable, where: { email: userEmail }, required: true }] });
         if (!foundUser) {
@@ -89,6 +110,12 @@ class User {
         return new User(foundUser);
     }
 
+    /**
+     * @memberof User
+     * @name create
+     * @description Add the user to database
+     * @returns {Promise<User | Error>} User if success, error if not
+     */
     create = async () => {
         // Get user data:
         const userData = lodash.omitBy(this.getData(), lodash.isUndefined);
@@ -147,16 +174,30 @@ class User {
         return new User(updatedUser);
     }
 
-    getData = () => lodash.pick(this, ['id', 'firstName', 'lastName', 'birthDate', 'email', 'password', 'status']);
+    /**
+     * @memberof User
+     * @name getData
+     * @description Get instance User data object
+     * @returns {UserData} User data
+     */
+    getData = () => lodash.pick(this, ['id', 'firstName', 'lastName', 'birthDate', 'email', 'password', 'status', 'passwordHash']) as UserData;
 
-    getPublicData = () => ({
-        id: this.id,
-        firstName: this.firstName,
-        lastName: this.lastName,
-        birthDate: this.birthDate,
-        email: this.email,
-    });
+    /**
+     * @memberof User
+     * @name getPublicData
+     * @description Get instance User public data object
+     * @returns {UserData} User public data
+     */
+    getPublicData = () => lodash.pick(this, ['id', 'firstName', 'lastName', 'birthDate', 'email']) as UserPublicData;
 
+    /**
+     * @memberof User
+     * @name loginByLocalCredentials
+     * @description Login user using email and password
+     * @param {string} email User email
+     * @param {string} password User password
+     * @returns {Promise<User | Error>} User if success, Error if not
+     */
     static loginByLocalCredentials = async (email: string, password: string) => {
         if (!email || !password) {
             throw new Error('Email or password not found');
@@ -182,6 +223,12 @@ class User {
         return user;
     }
 
+    /**
+     * @memberof User
+     * @name sendRegistrationEmail
+     * @description Sends registration email to user
+     * @returns {Promise<void>}
+     */
     sendRegistrationEmail = () => MailingUtils.sendEmail({
         from: {
             email: process.env.REGISTRATION_FROM_EMAIL as string,
@@ -198,6 +245,12 @@ class User {
         }),
     });
 
+    /**
+     * @memberof User
+     * @name resendVerificationEmail
+     * @description Resends verification email to user
+     * @returns {Promise<void>}
+     */
     resendVerificationEmail = () => MailingUtils.sendEmail({
         from: {
             email: process.env.REGISTRATION_FROM_EMAIL as string,

@@ -1,8 +1,4 @@
-
-interface EmailContent {
-    type: string,
-    value: string,
-}
+/* eslint-disable camelcase */
 
 interface EmailUser {
     name: string,
@@ -16,22 +12,19 @@ export interface EmailProps {
     replyTo?: EmailUser;
 }
 
+interface SendGridPersonalization {
+    to: EmailUser[],
+    subject: string,
+}
+
+interface SendGridContent {
+    type: 'text/html' | 'text/plain',
+    value: string
+}
+
 export interface SendGridApiBodyProps {
-    from: {
-        email: string,
-     },
-     personalizations:  {
-           to: [
-              {
-                 email: string,
-              },
-           ],
-           // eslint-disable-next-line camelcase
-           dynamic_template_data?: {
-               [key: string]: string | number,
-            }
-    }[],
-    // eslint-disable-next-line camelcase
-    template_id?: string,
-    content?: EmailContent,
+    personalizations: SendGridPersonalization[],
+    content: SendGridContent[],
+    from: EmailUser,
+    reply_to: EmailUser,
 }
