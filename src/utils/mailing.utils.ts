@@ -10,22 +10,24 @@ const emailRequestUrl = 'https://api.sendgrid.com/v3/mail/send';
  * @param {EmailProps} emailProps Properties of the sending email (from, to and template details)
  * @returns {Promise<void>} Returns an empty promise
  */
-export const sendEmail = async ({ fromEmail, toEmail, templateId, templateVariablesValues }: EmailProps): Promise<void> => {
+const sendEmail = async ({ from, to, subject, html, replyTo }: EmailProps): Promise<void> => {
 
     // Setup SendGrid request body:
     const emailRequestBody: SendGridApiBodyProps = {
-        from: {
-            email: fromEmail,
-        },
         personalizations: [
             {
-                to: [
-                    { email: toEmail }
-                ],
-                dynamic_template_data: templateVariablesValues,
-            }
+                to: [to],
+                subject,
+            },
         ],
-        template_id: templateId,
+        content: [
+            {
+                type: 'text/html',
+                value: html
+            },
+        ],
+        from,
+        reply_to: replyTo || from,
     };
 
     // Setup Send Grid email request headers:
@@ -41,4 +43,9 @@ export const sendEmail = async ({ fromEmail, toEmail, templateId, templateVariab
     if (emailResponse.status !== 202) {
         throw new Error(emailResponse.data?.error?.message as string);
     }
+
 }
+
+export default {
+    sendEmail,
+};

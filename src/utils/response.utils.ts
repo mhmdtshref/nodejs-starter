@@ -36,9 +36,10 @@ const created = (response: Response, data: { [key: string]: any }, message: stri
  * @name unauthorized
  * @description Send unauthorized error response (status code: 401)
  * @param {Response} response Client response to send the JSON to
+ * @param {string} error Response error message
  * @returns {Response} Returns an empty promise
  */
-const unauthorized = (response: Response) => response.status(401).json({ error: 'Unauthorized' });
+const unauthorized = (response: Response, error = 'Unauthorized') => response.status(401).json({ error });
 
 /**
  * @memberof ResponseUtils

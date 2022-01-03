@@ -26,7 +26,9 @@
     "rules": {
         "import/extensions": 0,
         "import/prefer-default-export": 0,
-        "jsdoc/check-tag-names": ["error", { "definedTags": ["swagger"] }]
+        "jsdoc/check-tag-names": ["error", { "definedTags": ["swagger"] }],
+        "no-shadow": "off",
+        "@typescript-eslint/no-shadow": "error"
     },
     "settings": {
         "import/resolver": {

@@ -24,8 +24,17 @@ const requiredVariables = [
     'DB_NAME',
     'DB_LOGGING',
 
+    // Auth:
+    'USER_AUTH_TOKEN_SECRET',
+    'VERIFY_URL',
+    'FRONTEND_URL',
+
     // Mailing:
     'SEND_GRID_API_KEY',
+    'REGISTRATION_FROM_EMAIL',
+    'REGISTRATION_FROM_NAME',
+    'REGISTRATION_REPLY_TO_EMAIL',
+    'REGISTRATION_REPLY_TO_NAME',
 
     // App:
     'APP_NAME',
