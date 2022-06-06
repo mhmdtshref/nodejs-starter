@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { ResponseUtils } from '@utils';
-import AuthRouter from './auth.router';
-import DocsRouter from './docs.router';
+import AuthRouter from '@routers/auth.router';
+import DocsRouter from '@routers/docs.router';
 
 // App Routers
 const router = Router();

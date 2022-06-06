@@ -1,5 +1,9 @@
 /* eslint-disable camelcase */
 
+export enum MailingServiceProviders {
+    SendGrid = 'sendgrid',
+}
+
 interface EmailUser {
     name: string,
     email: string,

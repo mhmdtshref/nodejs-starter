@@ -1,3 +1,3 @@
-import AuthMiddlewareImport from './auth.middlewares';
+import AuthMiddlewareImport from '@middlewares/auth.middlewares';
 
 export const AuthMiddleware = AuthMiddlewareImport;

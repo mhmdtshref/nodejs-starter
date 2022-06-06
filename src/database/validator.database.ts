@@ -58,8 +58,23 @@ const enumValidateObject = (fieldName: string, values: string[], nullable: boole
     return validator;
 }
 
+const urlValidateObject = (fieldName: string, nullable: boolean) => {
+    const validator: ModelValidateOptions = {
+        isUrl: {
+            msg: `${fieldName} must be a valid url`,
+        },
+    }
+    if (!nullable) {
+        validator.notNull = {
+            msg: `${fieldName} cannot be null`,
+        };
+    }
+    return validator;
+}
+
 export default {
     stringValidateObject,
     dateValidateObject,
     enumValidateObject,
+    urlValidateObject,
 };

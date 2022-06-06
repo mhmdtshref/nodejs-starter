@@ -1,8 +1,27 @@
+import { AuthMethod, OAuth2Provider } from "@types";
 import Joi from "joi";
 
 const loginSchema = {
-    email: Joi.string().required(),
-    password: Joi.string().required(),
+    method: Joi.string().required().valid(...Object.values(AuthMethod)),
+    provider: Joi.alternatives().conditional('method', { is: AuthMethod.OAuth2, then: Joi.string().required().valid(...Object.values(OAuth2Provider)) }),
+    credentials: Joi.alternatives().conditional(
+        'method',
+        [
+            {
+                is: AuthMethod.OAuth2,
+                then: Joi.object({
+                    code: Joi.string().required(),
+                })
+            },
+            {
+                is: AuthMethod.Password,
+                then: Joi.object({
+                    email: Joi.string().required(),
+                    password: Joi.string().required(),
+                })
+            }
+        ],
+    ),
 };
 
 /**

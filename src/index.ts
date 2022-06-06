@@ -1,17 +1,33 @@
 import http from 'http';
-import '@environment';
+import app from '@app';
+import environments from '@environments';
+import loggerUtils from '@logger';
 import database from '@database/sequelize.database';
-import app from '@src/app';
+import { EnvironmentValidators } from '@validators';
 
 const server = new http.Server(app);
 
 const runServer = async () => {
+    const environmentsValidationResults = EnvironmentValidators.validateEnvironments(environments);
+
+    if (environmentsValidationResults.error) {
+        throw new Error(environmentsValidationResults.error.message);
+    }
+
     await database.authenticate();
     await database.sync({ force: false });
 
-    server.listen(process.env.PORT, () => {
+    const { host, port } = environments.server;
+
+    server.listen(port, () => {
+        const message = `Server is running on http://${host}:${port}`;
+
+        // Log to info file log:
+        loggerUtils.info(message)
+
+        // Log to console:
         // eslint-disable-next-line no-console
-        console.log(`Server is running on http://${process.env.HOST}:${process.env.PORT}`);
+        console.log(message);
     });
 }
 

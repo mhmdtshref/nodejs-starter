@@ -1,10 +1,14 @@
 import { Request, Response } from 'express';
 import { User } from '@models';
-import { JWTUtils, ResponseUtils } from '@utils';
-import { AuthValidators } from '@validators';
+import { JWTUtils, ResponseUtils, UserUtils } from '@utils';
+import { AuthValidators, UserValidators } from '@validators';
 import Logger from '@logger';
+import Configs from '@configs';
+import { AuthMethod, UserRegisterRequestBody } from '@types';
+import environments from '@environments';
 
-const userAuthTokenSecret = process.env.USER_AUTH_TOKEN_SECRET as string;
+
+const userAuthTokenSecret = environments.auth.userTokenSecret;
 
 /**
  * @memberof AuthController
@@ -17,21 +21,28 @@ const userAuthTokenSecret = process.env.USER_AUTH_TOKEN_SECRET as string;
 const register = async (request: Request, response: Response) => {
     try {
         // Get data from body:
-        const data = request.body;
+        const userRegisterRequestBody = request.body as UserRegisterRequestBody;
 
-        // Create user instance:
-        const user = new User(data);
+        // Get user data from body:
+        const userRegistrationData = await UserUtils.getRegisterDataByUserCreationData(userRegisterRequestBody);
 
-        // Run create function:
-        const createdUser = await user.create();
+        // Validate user details:
+        const validationData = userRegisterRequestBody?.method === AuthMethod.Password
+        ? { ...userRegistrationData, password: userRegisterRequestBody?.data?.password }
+        : userRegistrationData;
+        const validationResult = UserValidators.validateUserCreate(validationData, userRegisterRequestBody.method);
 
-        if (createdUser instanceof Error) {
-            ResponseUtils.badRequest(response, createdUser.message);
+        // Check validation errors:
+        if (validationResult.error) {
+            ResponseUtils.badRequest(response, validationResult.error.message);
             return;
         }
 
+        // Get user:
+        const user = await User.createOrFindUser(userRegisterRequestBody, userRegistrationData);
+
         // Get public details for response:
-        const publicData = createdUser.getPublicData();
+        const publicData = user.getPublicData();
 
         // Generate expiration date:
         const expirationDate = JWTUtils.getExpirationDate(30);
@@ -53,15 +64,16 @@ const register = async (request: Request, response: Response) => {
         };
 
         // Send response:
-        ResponseUtils.created(response, responseBody, 'User created successfully');
+        ResponseUtils.created(response, responseBody, 'User login method added successfully');
 
         // Send email with verification link:
-        createdUser.sendRegistrationEmail()
-        .catch((error) => {
-            // Log error:
-            Logger.error(error);
-        })
-
+        if (Configs.emailValidation) {
+            user.sendRegistrationEmail()
+            .catch((error: any) => {
+                // Log error:
+                Logger.error(error);
+            })
+        }
     } catch (error: any) {
         // Log error:
         Logger.error(error);
@@ -92,13 +104,8 @@ const login = async (request: Request, response: Response) => {
             ResponseUtils.badRequest(response, validationResult.error.message);
         }
 
-        const loggedUser = await User.loginByLocalCredentials(data.email, data.password);
-
-        // If login has error, response with error message:
-        if (loggedUser instanceof Error) {
-            ResponseUtils.badRequest(response, loggedUser.message);
-            return;
-        }
+        // Use credentials to get login user:
+        const loggedUser = await User.login(data);
 
         // Get public data:
         const publicData = loggedUser.getPublicData();
@@ -144,22 +151,23 @@ const login = async (request: Request, response: Response) => {
  */
 const verify = async (request: Request, response: Response) => {
     try {
-        const { id, verificationCode } = request.body;
-        const user = await User.findById(id as number);
+        // Destructure request body:
+        const { verificationCode } = request.body;
 
+        // Get user by id:
+        const user = request.app.get('user');
+
+        // Check if user not found:
         if (!user) {
             ResponseUtils.badRequest(response, 'User not found');
             return;
         }
 
+        // Verify and get user:
         const verifiedUser = await user.verify(verificationCode as string);
 
-        if (verifiedUser instanceof Error) {
-            ResponseUtils.badRequest(response, verifiedUser.message);
-            return;
-        }
-
-        ResponseUtils.success(response, user.getPublicData(), 'User verified successfully');
+        // Response with user public data:
+        ResponseUtils.success(response, verifiedUser.getPublicData(), 'User verified successfully');
     } catch (error: any) {
         // Logging error:
         Logger.error(error);
@@ -178,10 +186,19 @@ const verify = async (request: Request, response: Response) => {
  * @returns {Promise<void>}
  */
 const requestVerificationEmail = async (request: Request, response: Response) => {
-    const user = request.app.get('user') as User;
-    await user.sendRegistrationEmail();
+    try {
+        const user = request.app.get('user') as User;
+        await user.sendRegistrationEmail();
 
-    ResponseUtils.success(response, user.getPublicData(), 'Verification email resent successfully');
+        ResponseUtils.success(response, user.getPublicData(), 'Verification email resent successfully');
+    } catch (error: any) {
+        // Log error:
+        Logger.error(error);
+
+        // Response with error message:
+        ResponseUtils.badRequest(response, error?.message || 'Unknown error');
+    }
+    
 }
 
 export default {

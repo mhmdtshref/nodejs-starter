@@ -1,10 +1,10 @@
 import { UserTable, LoginTable } from '@database/tables';
-import { UserValidators } from '@validators';
-import { LoginProvider, UserData, UserPublicData, UserStatus } from '@types';
-import { HashingUtils, MailingUtils } from '@utils';
+import { UserRegisterRequestBody, UserData, UserLoginRequestBody, UserPublicData, UserStatus, UserRegistrationData } from '@types';
+import { ErrorUtils, MailingUtils, UserUtils } from '@utils';
 import lodash from 'lodash';
 import { nanoid } from 'nanoid';
 import Emails from '@emails';
+import environments from '@environments';
 
 interface UserConstructorProps {
     id?: number;
@@ -16,10 +16,6 @@ interface UserConstructorProps {
     birthDate?: Date;
 
     email?: string;
-
-    passwordHash?: string;
-
-    password?: string;
 
     status?: UserStatus;
 
@@ -35,29 +31,25 @@ class User {
 
     lastName?: string;
 
-    birthDate?: Date;
-
     email?: string;
 
-    passwordHash?: string;
-
-    password?: string;
+    birthDate?: Date;
 
     status?: UserStatus;
 
     verificationCode?: string;
 
-    constructor (data: UserConstructorProps) {
-        const localLogin = data.Logins?.find(login => login.provider === LoginProvider.local);
-        this.id = data.id;
-        this.firstName = data.firstName;
-        this.lastName = data.lastName;
-        this.email = data.email || localLogin?.email;
-        this.passwordHash = data.passwordHash || localLogin?.passwordHash;
-        this.password = data.password;
-        this.birthDate = data.birthDate ? new Date(data.birthDate) : undefined;
-        this.status = data.status;
-        this.verificationCode = data.verificationCode;
+    Logins?: LoginTable[];
+
+    constructor (props: UserConstructorProps) {
+        this.id = props.id;
+        this.firstName = props.firstName;
+        this.lastName = props.lastName;
+        this.email = props.email;
+        this.birthDate = props.birthDate ? new Date(props.birthDate) : undefined;
+        this.status = props.status;
+        this.verificationCode = props.verificationCode;
+        this.Logins = props?.Logins;
     }
 
     /**
@@ -67,27 +59,23 @@ class User {
      * @param {UserTable} userTable UserTable instance
      * @returns {User} user model
      */
-    static getModel = (userTable: UserTable) => {
-        const localLogin = userTable?.Logins?.find(login => login?.provider === LoginProvider.local);
-        return new User({
+    static getModel = (userTable: UserTable) => new User({
             id: userTable?.id,
             firstName: userTable?.firstName,
             lastName: userTable?.lastName,
             status: userTable?.status,
             verificationCode: userTable?.verificationCode,
-            email: localLogin?.email,
-            passwordHash: localLogin?.passwordHash,
-        });
-    }
+            email: userTable.email,
+        })
 
     /**
      * @memberof User
-     * @name findById
+     * @name getById
      * @description Get User instance by user id
      * @param {number} userId User id
      * @returns {Promise<User | null>} User if found, null if not
      */
-    static findById = async (userId: number) => {
+    static getById = async (userId: number) => {
         const foundUser = await UserTable.findByPk(userId, { include: [{ model: LoginTable }] });
         if (!foundUser) {
             return null;
@@ -97,16 +85,18 @@ class User {
 
     /**
      * @memberof User
-     * @name findByEmail
+     * @name getByEmail
      * @description Get User instance by user email
      * @param {string} userEmail User email
      * @returns {Promise<User | null>} User if found, null if not
      */
-    static findByEmail = async (userEmail: string) => {
-        const foundUser = await UserTable.findOne({ include: [{ model: LoginTable, where: { email: userEmail }, required: true }] });
+    static getByEmail = async (userEmail: string) => {
+        const foundUser = await UserUtils.getUserByEmail(userEmail);
+
         if (!foundUser) {
             return null;
         }
+
         return new User(foundUser);
     }
 
@@ -114,60 +104,66 @@ class User {
      * @memberof User
      * @name create
      * @description Add the user to database
-     * @returns {Promise<User | Error>} User if success, error if not
+     * @param {UserRegisterRequestBody} userRegisterRequestBody Contains create user details
+     * @param {string} providerUserId user id in oauth2 provider system
+     * @returns {Promise<User>} User if success, error if not
      */
-    create = async () => {
+     create = async (userRegisterRequestBody: UserRegisterRequestBody, providerUserId: string) => {
         // Get user data:
-        const userData = lodash.omitBy(this.getData(), lodash.isUndefined);
+        const userData = lodash.omitBy(this.getData(), lodash.isUndefined) as UserData;
         userData.status = UserStatus.pendingVerification;
-        const { email, password } = userData;
 
-        // Validate user details:
-        const validationResult = UserValidators.validateUserCreate(userData);
+        // Prepare login table data:
+        const { loginTableData, loginInclude } = await UserUtils.getLoginTableData(userRegisterRequestBody, providerUserId);
 
-        // Check validation errors:
-        if (validationResult.error) {
-            return Error(validationResult.error.message);
-        }
-
-        // Check duplicated email:
-        const foundUser = await User.findByEmail(userData.email as string);
-        if (foundUser) {
-            return new Error('User exists with sent email');
-        }
-
-        // Hash password
-        const passwordHash = HashingUtils.hashText(password as string);
-
-        // Prepare login and user tables data:
-        const loginTable = { email, passwordHash } as LoginTable;
+        // Generate verification code:
         const verificationCode = nanoid(30);
 
-        const userTable = { firstName: this.firstName, lastName: this.lastName, birthDate: this.birthDate, verificationCode, Logins: [loginTable] } as UserTable;
+        // Prepare user table-row data:
+        const userTableData = {
+            firstName: this.firstName,
+            lastName: this.lastName,
+            email: this.email,
+            birthDate: this.birthDate,
+            verificationCode,
+            Logins: [loginTableData],
+        };
 
-        // Create row:
-        const createdTable = await UserTable.create(userTable, { include: [{ model: LoginTable }] });
+        // Create user table-row (including login and password tables-rows):
+        const createdUserTableData = await UserTable.create(userTableData, {
+            include: {
+                model: LoginTable,
+                include: loginInclude,
+            },
+        });
 
         // Return created user model:
-        return User.getModel(createdTable);
+        return User.getModel(createdUserTableData);
     }
 
+    /**
+     * @memberof User
+     * @name verify
+     * @description Verifies user account
+     * @param {string} verificationCode Code required to verify user account
+     * @returns {Promise<User>} User if success, error if not
+     */
     verify = async (verificationCode: string) => {
         if (!this.id) {
-            throw new Error('this.id not found');
+            throw ErrorUtils.getNotFoundError('this.id', false);
         }
 
         if (!verificationCode) {
-            throw new Error('verificationCode not found');
+            throw ErrorUtils.getNotFoundError('verificationCode', false);
         }
 
         const user = await UserTable.findByPk(this.id);
         if (!user) {
-            throw new Error('User not found');
+            throw ErrorUtils.getNotFoundError('User', false);
         }
 
         if (user.verificationCode !== verificationCode) {
-            return new Error('Invalid verification code');
+            throw ErrorUtils.getInvalidError('verification code', true);
         }
 
         const updatedUser = await user.update({ status: UserStatus.active });
@@ -180,7 +176,7 @@ class User {
      * @description Get instance User data object
      * @returns {UserData} User data
      */
-    getData = () => lodash.pick(this, ['id', 'firstName', 'lastName', 'birthDate', 'email', 'password', 'status', 'passwordHash']) as UserData;
+    getData = () => lodash.pick(this, ['id', 'firstName', 'lastName', 'email', 'birthDate', 'status']) as UserData;
 
     /**
      * @memberof User
@@ -188,39 +184,18 @@ class User {
      * @description Get instance User public data object
      * @returns {UserData} User public data
      */
-    getPublicData = () => lodash.pick(this, ['id', 'firstName', 'lastName', 'birthDate', 'email']) as UserPublicData;
+    getPublicData = () => lodash.pick(this, ['id', 'firstName', 'lastName', 'email', 'birthDate']) as UserPublicData;
 
     /**
      * @memberof User
-     * @name loginByLocalCredentials
-     * @description Login user using email and password
-     * @param {string} email User email
-     * @param {string} password User password
-     * @returns {Promise<User | Error>} User if success, Error if not
+     * @name login
+     * @description Use any login method to get access token
+     * @param {UserLoginRequestBody} userLoginRequestBody Data required for login
+     * @returns {Promise<User>} User if success, Error if not
      */
-    static loginByLocalCredentials = async (email: string, password: string) => {
-        if (!email || !password) {
-            throw new Error('Email or password not found');
-        }
-
-        const user = await this.findByEmail(email);
-
-        if (!user) {
-            return new Error('No user found with passed email');
-        }
-
-        // Get password hash:
-        const passwordHash = user.passwordHash as string;
-
-        // Verify password:
-        const isPasswordVerified = HashingUtils.verifyHash(password, passwordHash);
-
-        // Send error message if password is wrong:
-        if (!isPasswordVerified) {
-            return new Error('Invalid password for passed email');
-        }
-
-        return user;
+    static login = async (userLoginRequestBody: UserLoginRequestBody) => {
+        const user = await UserUtils.getUserByLogin(userLoginRequestBody);
+        return new User(user);
     }
 
     /**
@@ -231,8 +206,8 @@ class User {
      */
     sendRegistrationEmail = () => MailingUtils.sendEmail({
         from: {
-            email: process.env.REGISTRATION_FROM_EMAIL as string,
-            name: process.env.REGISTRATION_FROM_NAME as string,
+            name: environments.mailing.registration.from.name,
+            email: environments.mailing.registration.from.email,
         },
         subject: 'New User Registration',
         to: {
@@ -241,7 +216,7 @@ class User {
         },
         html: Emails.RegistrationHtml({
             name: this.firstName as string,
-            verificationUrl: `${process.env.FORNTEND_URL}${process.env.VERIFY_URL}?id=${this.id}&verificationCode=${this.verificationCode}`,
+            verificationUrl: `${environments.auth.frontendDomain}${environments.auth.verifyUserUrlPath}?id=${this.id}&verificationCode=${this.verificationCode}`,
         }),
     });
 
@@ -253,19 +228,48 @@ class User {
      */
     resendVerificationEmail = () => MailingUtils.sendEmail({
         from: {
-            email: process.env.REGISTRATION_FROM_EMAIL as string,
-            name: process.env.REGISTRATION_FROM_NAME as string,
+            name: environments.mailing.registration.from.name,
+            email: environments.mailing.registration.from.email,
         },
-        subject: 'Email Veridication',
+        subject: 'Email Verification',
         to: {
             name: `${this.firstName} ${this.lastName}`,
             email: this.email as string,
         },
         html: Emails.EmailVerificationEmail({
             name: this.firstName as string,
-            verificationUrl: `${process.env.FORNTEND_URL}${process.env.VERIFY_URL}?id=${this.id}&verificationCode=${this.verificationCode}`,
+            verificationUrl: `${environments.auth.frontendDomain}${environments.auth.verifyUserUrlPath}?id=${this.id}&verificationCode=${this.verificationCode}`,
         }),
     })
+
+    static createOrFindUser = async (userRegisterRequestBody: UserRegisterRequestBody, userRegistrationData: UserRegistrationData) => {
+
+        // Check duplicated email:
+        const foundUser = await User.getByEmail(userRegistrationData.email);
+
+        // Check if user found in database:
+        if (foundUser) {
+            // Check if data passed can be used to create new login method:
+            const registerNewLoginAbility = await UserUtils.getRegisterLoginMethodAbility(foundUser, userRegisterRequestBody, userRegistrationData?.providerUserId as string);
+
+            // Create login method if ability check is true:
+            if (registerNewLoginAbility) {
+                await UserUtils.assignNewLoginToUser(foundUser, userRegisterRequestBody, userRegistrationData?.providerUserId as string);
+            }
+
+            // Return found user:
+            return foundUser;
+        }
+
+        // Create user instance:
+        const userToCreate = new User(lodash.pick(userRegistrationData, ['firstName', 'lastName', 'email', 'birthDate']));
+
+        // Run create function:
+        const createdUser = await userToCreate.create(userRegisterRequestBody, userRegistrationData?.providerUserId as string);
+
+        // Return created user:
+        return createdUser;
+    }
 
 }
 

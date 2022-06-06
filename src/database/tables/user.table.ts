@@ -11,6 +11,8 @@ class User extends Model {
 
     lastName!: string;
 
+    email!: string;
+
     birthDate?: Date;
 
     status!: UserStatus;
@@ -30,6 +32,11 @@ User.init({
         type: DataTypes.STRING(255),
         allowNull: false,
         validate: Validators.stringValidateObject('lastName', false, { min: 2, max: 255 }),
+    },
+    email: {
+        type: DataTypes.STRING(511),
+        allowNull: false,
+        validate: Validators.stringValidateObject('email', false, { min: 2, max: 255 }),
     },
     birthDate: {
         type: DataTypes.DATEONLY,
