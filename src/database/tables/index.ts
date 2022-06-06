@@ -1,13 +1,18 @@
-import UserTable from './user.table';
-import LoginTable from './login.table';
-import ResetPassword from './resetPassword.table';
-import sequelizeDatabase from '../sequelize.database';
+import UserTable from '@database/tables/user.table';
+import LoginTable from '@database/tables/login.table';
+import PasswordTable from '@database/tables/password.table';
+import ResetPasswordTable from '@database/tables/resetPassword.table';
+import Oauth2TokenTable from '@database/tables/oauth2Token.table';
+import sequelizeDatabaseImport from '@database/sequelize.database';
 import '../relations.database';
 
+const sequelizeDatabase = sequelizeDatabaseImport;
 
 export {
     UserTable,
     LoginTable,
-    ResetPassword,
+    PasswordTable,
+    ResetPasswordTable,
+    Oauth2TokenTable,
     sequelizeDatabase,
 };

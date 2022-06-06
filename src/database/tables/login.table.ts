@@ -1,36 +1,27 @@
 import { Model, tableConfigs } from '@database/settings.database';
-import { LoginProvider } from '@src/types';
+import { AuthMethod } from '@types';
 import { DataTypes } from 'sequelize';
-import Validators from '../validator.database';
+import Validators from '@database/validator.database';
+import Oauth2Token from '@database/tables/oauth2Token.table';
+import Password from '@database/tables/password.table';
 
 class Login extends Model {
     id!: number;
 
-    email!: string;
-
-    passwordHash!: string;
-
-    provider!: LoginProvider.local;
+    method!: AuthMethod;
 
     UserId!: number;
+
+    Passwords?: Password[];
+
+    Oauth2Tokens?: Oauth2Token[];
 }
 
 Login.init({
-    email: {
-        type: DataTypes.STRING(511),
+    method: {
+        type: DataTypes.ENUM(...Object.values(AuthMethod)),
         allowNull: false,
-        validate: Validators.stringValidateObject('firstName', false, { min: 2, max: 255 }),
-    },
-    passwordHash: {
-        type: DataTypes.TEXT,
-        allowNull: false,
-        validate: Validators.stringValidateObject('passwordHash', false),
-    },
-    provider: {
-        type: DataTypes.ENUM(...Object.values(LoginProvider)),
-        allowNull: false,
-        defaultValue: LoginProvider.local,
-        validate: Validators.enumValidateObject('provider', Object.values(LoginProvider), false),
+        validate: Validators.enumValidateObject('method', Object.values(AuthMethod), false),
     },
 }, tableConfigs);
 

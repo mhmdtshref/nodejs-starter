@@ -1,7 +1,13 @@
-/* eslint-disable no-unused-vars */
 
-export enum LoginProvider {
-    local = 'local',
+export enum OAuth2Provider {
+    facebook = 'facebook',
+    google = 'google',
+    linkedIn = 'linkedIn',
+};
+
+export enum AuthMethod {
+    Password = 'password',
+    OAuth2 = 'oauth2',
 };
 
 export interface UserTokenObject {

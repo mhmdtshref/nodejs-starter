@@ -1,5 +1,5 @@
-import RegistrationHtml from './registration.email';
-import EmailVerificationEmail from './verification.email';
+import RegistrationHtml from '@emails/registration.email';
+import EmailVerificationEmail from '@emails/verification.email';
 
 export default {
     RegistrationHtml,

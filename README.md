@@ -9,6 +9,10 @@
 - Package manager: [NPM](https://www.npmjs.com/)
 - API Documentation: [Swagger](https://swagger.io/)
 
+## **Authentications Supported:**
+- Password (with email)
+- OAuth2.0: Supports all of [Google](https://www.google.com), [Facebook](https://www.facebook.com), [LinkedIn](https://www.linkedin.com) providers
+
 ## **Installation**
 1. **Clone project:**
 <br/>Open CMD and go to the directory you want to clone the app in and run:

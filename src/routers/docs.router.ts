@@ -1,36 +1,30 @@
 import { Router } from 'express';
 import SwaggerUi from 'swagger-ui-express';
 import SwaggerJSDoc, { Options as SwaggerJSDocOptions, } from 'swagger-jsdoc';
+import environments from '@environments';
 
 // Create router:
 const router = Router();
 
-// Docs router settings:
-const {
-    APP_NAME: appName,
-    APP_CONTACT_NAME: contactName,
-    APP_CONTACT_EMAIL: contactEmail,
-    APP_CONTACT_URL: contactUrl,
-    APP_VERSION: appVersion,
-    HOST: serverHost,
-    PORT: serverPort
-} = process.env;
 
 // Prepare options:
 const swaggerJSDocOptions: SwaggerJSDocOptions = {
+    openapi: '3.0.0',
     apis: ['src/routers/*.router.ts'],
     swaggerDefinition: {
         info: {
-            title: `${appName} API Documentation`,
-            description: `Docs of ${appName}. Includes paths, requests, response, body/query/params data required and authentication types`,
+            title: `${environments.app.name} API Documentation`,
+            description: `Docs of ${environments.app.name}. Includes paths, requests, response, body/query/params data required and authentication types`,
             contact: {
-                name: contactName,
-                email: contactEmail,
-                url: contactUrl,
+                name: environments.app.contact.name,
+                email: environments.app.contact.email,
+                url: environments.app.contact.url,
             },
-            servers: [`http://${serverHost}:${serverPort}`],
-            version: appVersion as string,
+            version: environments.app.version,
         },
+        host: `${environments.server.host}:${environments.server.port}`,
+        basePath: '/api/v1',
+        schemes: ['http'],
     }
 };
 
